@@ -1,0 +1,70 @@
+# .github/workflows/ci.yml
+# Runs on every pull request and push to main.
+#
+# Steps:
+#   1. Lint Python app (ruff) + run unit tests (pytest)
+#   2. Build Docker image (no push)
+
+name: CI
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/hippo-hello-world
+
+jobs:
+  # ── Python: lint + unit tests ────────────────────────────────────────────
+  python:
+    name: Python Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: app/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r app/requirements.txt
+          pip install ruff pytest
+
+      - name: Lint (ruff)
+        run: ruff check app/
+
+      - name: Unit tests (pytest)
+        run: python -m pytest tests/unit/ -v --tb=short
+
+  # ── Docker: build (no push on PR) ──────────────────────────────────────
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (cache only, no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: ${{ env.IMAGE_REPO }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

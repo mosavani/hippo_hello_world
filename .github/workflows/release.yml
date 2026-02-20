@@ -1,0 +1,104 @@
+# .github/workflows/release.yml
+# Triggered by pushing a semver tag (e.g. v1.2.3).
+#
+# Steps:
+#   1. Build and push Docker image to GHCR
+#   2. Update image_tag in service-settings/components-manifest.yml
+#   3. Commit and push the manifest update back to main
+#      → ArgoCD detects the change and deploys automatically
+#
+# Required repository secrets:
+#   (none beyond GITHUB_TOKEN — used for both GHCR push and manifest commit)
+#
+# Required repository permissions (Settings → Actions → General):
+#   contents: write   — to commit the manifest update back to main
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write    # commit manifest update back to main
+  packages: write    # push image to GHCR
+
+env:
+  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/hippo-hello-world
+  MANIFEST: service-settings/components-manifest.yml
+
+jobs:
+  release:
+    name: Build, Push & Update Manifest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Checkout main so we can commit the manifest update back to it.
+          # The tag trigger checks out a detached HEAD by default.
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Strip leading 'v' from tag → image version (e.g. v1.2.3 → 1.2.3)
+      - name: Resolve version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      # ── Docker ───────────────────────────────────────────────────────────
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_REPO }}:${{ steps.version.outputs.version }}
+            ${{ env.IMAGE_REPO }}:latest
+          labels: |
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── Update components-manifest.yml ───────────────────────────────────
+      # Writes the new image_tag into the manifest so ArgoCD picks it up.
+      - name: Update image_tag in components-manifest.yml
+        run: |
+          sed -i "s|image_tag:.*|image_tag: \"${{ steps.version.outputs.version }}\"|" \
+            ${{ env.MANIFEST }}
+
+      - name: Commit and push manifest update
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ${{ env.MANIFEST }}
+          git commit -m "chore: bump image_tag to ${{ steps.version.outputs.version }} [skip ci]"
+          git push origin main
+
+      # ── Summary ──────────────────────────────────────────────────────────
+      - name: Summary
+        run: |
+          echo "### Release ${{ steps.version.outputs.version }} published" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Docker image:**" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ env.IMAGE_REPO }}:${{ steps.version.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Manifest updated:** \`${{ env.MANIFEST }}\` → image_tag: \`${{ steps.version.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "ArgoCD will deploy \`hippo-hello-world-dev\` automatically." >> "$GITHUB_STEP_SUMMARY"
+          echo "\`hippo-hello-world-prod\` requires a manual sync." >> "$GITHUB_STEP_SUMMARY"

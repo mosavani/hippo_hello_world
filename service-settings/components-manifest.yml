@@ -1,0 +1,28 @@
+# service-settings/components-manifest.yml
+#
+# This is the only file a developer edits for deployment configuration.
+# The platform ApplicationSet (hippo_k8s-service/argocd/applicationset.yaml)
+# reads this file and generates all ArgoCD Applications automatically.
+#
+# Fields:
+#   name                — Helm release name and ArgoCD Application prefix
+#   repo_url            — Git repo URL for this service
+#   target_revision     — Git ref (HEAD, or pin to a tag for prod stability)
+#   image_repository    — Container image registry path
+#   image_tag           — Image tag to deploy (updated by CI on release)
+#   deployment_zones    — Informational: public | internal
+#   helm_chart_default_values_files           — base values (dev/staging)
+#   helm_chart_production_overrides_values_files — prod overrides
+
+components:
+  - name: hippo-hello-world
+    repo_url: https://github.com/mosavani/hippo_hello_world.git
+    target_revision: HEAD
+    image_repository: ghcr.io/mosavani/hippo-hello-world
+    image_tag: latest
+    deployment_zones:
+      - public
+    helm_chart_default_values_files:
+      - service-settings/default/values.yml
+    helm_chart_production_overrides_values_files:
+      - service-settings/overrides/values.yml

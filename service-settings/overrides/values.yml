@@ -1,0 +1,40 @@
+# service-settings/overrides/values.yml
+# Production overrides — merged last, highest precedence
+
+global:
+  env: prod
+
+service:
+  replicaCount: 4
+
+hpa:
+  minReplicas: 4
+  maxReplicas: 50
+  targetCPUUtilizationPercentage: 60
+
+affinity:
+  podAntiAffinity: hard             # Hard HA in production
+
+pdb:
+  minAvailable: 2
+
+ingress:
+  host: hello.hippo.example.com
+  annotations:
+    kubernetes.io/ingress.allow-http: "false"
+    networking.gke.io/managed-certificates: hippo-hello-world-cert
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+env:
+  - name: PORT
+    value: "8080"
+  - name: APP_ENV
+    value: production
+  - name: STARTUP_DELAY_SECONDS
+    value: "0"
