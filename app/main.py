@@ -127,8 +127,9 @@ def _after(response):
 
 @app.route("/")
 def hello():
-    time.sleep(random.uniform(0.1, 0.9)) # simulate random latency
-    return jsonify(message="Hello, World!"), 200
+    wait_time = random.uniform(0.1, 0.9)
+    time.sleep(wait_time) # simulate random latency
+    return jsonify(message=f"Hello, World! (waited {wait_time:.2f}s)"), 200
 
 
 @app.route("/health")
