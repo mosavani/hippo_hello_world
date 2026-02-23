@@ -19,7 +19,7 @@ pdb:
   minAvailable: 2
 
 ingress:
-  host: hello.hippo.example.com
+  # host: omitted — inherits default from Helm chart
   annotations:
     kubernetes.io/ingress.allow-http: "false"
     networking.gke.io/managed-certificates: hippo-hello-world-cert
