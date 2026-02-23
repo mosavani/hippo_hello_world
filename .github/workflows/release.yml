@@ -14,8 +14,8 @@
 # Required repository secrets:
 #   GCP_WORKLOAD_IDENTITY_PROVIDER — WIF provider resource name
 #                                    (from: terraform -chdir=environments/dev output -raw wif_provider)
-#   GCP_SERVICE_ACCOUNT            — SA email with roles/artifactregistry.writer
-#                                    (from: terraform -chdir=environments/dev output github_ci_service_accounts)
+#   GCP_SERVICE_ACCOUNT            — SA email for hippo-image-publisher (org-scoped, covers all service repos)
+#                                    (from: terraform -chdir=environments/dev output github_ci_service_accounts["hippo-image-publisher"])
 #   GAR_LOCATION                   — e.g. us-central1
 #   GAR_PROJECT_ID                 — GCP project ID
 #   GAR_REPOSITORY                 — AR repository name (e.g. hippo-images)
