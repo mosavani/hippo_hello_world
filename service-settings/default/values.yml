@@ -32,7 +32,7 @@ ingress:
   className: "gce"
   annotations:
     kubernetes.io/ingress.allow-http: "false"
-  host: hello-dev.hippo.example.com
+  # host: omitted — inherits default from Helm chart
   path: /
 
 hpa:

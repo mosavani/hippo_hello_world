@@ -18,6 +18,7 @@ Golden signals tracked:
 import os
 import time
 import threading
+import random
 
 from flask import Flask, jsonify, request, Response
 from prometheus_client import (
@@ -126,6 +127,7 @@ def _after(response):
 
 @app.route("/")
 def hello():
+    time.sleep(random.uniform(0.1, 0.9)) # simulate random latency
     return jsonify(message="Hello, World!"), 200
 
 
