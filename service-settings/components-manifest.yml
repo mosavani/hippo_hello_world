@@ -19,7 +19,7 @@ components:
   - name: hippo-hello-world
     repo_url: https://github.com/mosavani/hippo_hello_world.git
     target_revision: HEAD
-    image_tag: latest
+    image_tag: "0.0.3"
     deployment_zones:
       - public
     helm_chart_default_values_files:
