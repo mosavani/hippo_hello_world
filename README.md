@@ -110,7 +110,7 @@ The release workflow uses Workload Identity Federation. The GCP service account 
 | Secret | Value |
 |---|---|
 | `GCP_WORKLOAD_IDENTITY_PROVIDER` | WIF provider resource name (from `terraform output -raw wif_provider`) |
-| `GCP_SERVICE_ACCOUNT` | SA email with `roles/artifactregistry.writer` (from `terraform output github_ci_service_accounts`) |
+| `GCP_SERVICE_ACCOUNT` | SA email for `hippo-image-publisher` — org-scoped, shared across all service repos (from `terraform output github_ci_service_accounts["hippo-image-publisher"]`) |
 | `GAR_LOCATION` | e.g. `us-central1` |
 | `GAR_PROJECT_ID` | GCP project ID |
 | `GAR_REPOSITORY` | AR repository name (e.g. `hippo-images`) |
