@@ -49,6 +49,7 @@ jobs:
   docker-build:
     name: Docker Build
     runs-on: ubuntu-latest
+    needs: python
 
     steps:
       - name: Checkout
