@@ -3,7 +3,7 @@
 #
 # Steps:
 #   1. Lint Python app (ruff) + run unit tests (pytest)
-#   2. Build Docker image (no push)
+#   2. Build Docker image (no push — validates the Dockerfile only)
 
 name: CI
 
@@ -15,9 +15,6 @@ on:
 
 permissions:
   contents: read
-
-env:
-  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/hippo-hello-world
 
 jobs:
   # ── Python: lint + unit tests ────────────────────────────────────────────
@@ -65,6 +62,6 @@ jobs:
         with:
           context: .
           push: false
-          tags: ${{ env.IMAGE_REPO }}:${{ github.sha }}
+          tags: hippo-hello-world:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max

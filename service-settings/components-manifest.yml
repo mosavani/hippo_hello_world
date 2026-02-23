@@ -6,9 +6,10 @@
 #
 # Fields:
 #   name                — Helm release name and ArgoCD Application prefix
+#                         Also used by the platform to construct the image path:
+#                         <GAR_LOCATION>-docker.pkg.dev/<GAR_PROJECT_ID>/<GAR_REPOSITORY>/<name>
 #   repo_url            — Git repo URL for this service
 #   target_revision     — Git ref (HEAD, or pin to a tag for prod stability)
-#   image_repository    — Container image registry path
 #   image_tag           — Image tag to deploy (updated by CI on release)
 #   deployment_zones    — Informational: public | internal
 #   helm_chart_default_values_files           — base values (dev/staging)
@@ -18,7 +19,6 @@ components:
   - name: hippo-hello-world
     repo_url: https://github.com/mosavani/hippo_hello_world.git
     target_revision: HEAD
-    image_repository: ghcr.io/mosavani/hippo-hello-world
     image_tag: latest
     deployment_zones:
       - public

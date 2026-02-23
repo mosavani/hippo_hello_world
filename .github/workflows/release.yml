@@ -2,13 +2,23 @@
 # Triggered by pushing a semver tag (e.g. v1.2.3).
 #
 # Steps:
-#   1. Build and push Docker image to GHCR
+#   1. Build and push Docker image to Google Artifact Registry (GAR)
 #   2. Update image_tag in service-settings/components-manifest.yml
 #   3. Commit and push the manifest update back to main
 #      → ArgoCD detects the change and deploys automatically
 #
+# Authentication: Workload Identity Federation — no long-lived keys.
+# The GCP SA and WIF binding are declared in hippo_cloud/environments/dev/wif.yml
+# under github_ci and managed by Terraform.
+#
 # Required repository secrets:
-#   (none beyond GITHUB_TOKEN — used for both GHCR push and manifest commit)
+#   GCP_WORKLOAD_IDENTITY_PROVIDER — WIF provider resource name
+#                                    (from: terraform -chdir=environments/dev output -raw wif_provider)
+#   GCP_SERVICE_ACCOUNT            — SA email with roles/artifactregistry.writer
+#                                    (from: terraform -chdir=environments/dev output github_ci_service_accounts)
+#   GAR_LOCATION                   — e.g. us-central1
+#   GAR_PROJECT_ID                 — GCP project ID
+#   GAR_REPOSITORY                 — AR repository name (e.g. hippo-images)
 #
 # Required repository permissions (Settings → Actions → General):
 #   contents: write   — to commit the manifest update back to main
@@ -22,16 +32,18 @@ on:
 
 permissions:
   contents: write    # commit manifest update back to main
-  packages: write    # push image to GHCR
-
-env:
-  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/hippo-hello-world
-  MANIFEST: service-settings/components-manifest.yml
+  id-token: write    # required for WIF token exchange
 
 jobs:
   release:
     name: Build, Push & Update Manifest
     runs-on: ubuntu-latest
+
+    env:
+      GAR_LOCATION: ${{ secrets.GAR_LOCATION }}
+      GAR_PROJECT_ID: ${{ secrets.GAR_PROJECT_ID }}
+      GAR_REPOSITORY: ${{ secrets.GAR_REPOSITORY }}
+      MANIFEST: service-settings/components-manifest.yml
 
     steps:
       - name: Checkout
@@ -47,16 +59,26 @@ jobs:
         id: version
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
+      # Derive full image path from GAR secrets
+      - name: Resolve image repo
+        id: image
+        run: |
+          echo "repo=${GAR_LOCATION}-docker.pkg.dev/${GAR_PROJECT_ID}/${GAR_REPOSITORY}/hippo-hello-world" \
+            >> "$GITHUB_OUTPUT"
+
+      # ── Auth ─────────────────────────────────────────────────────────────
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Configure Docker credential helper for GAR
+        run: gcloud auth configure-docker "${GAR_LOCATION}-docker.pkg.dev" --quiet
+
       # ── Docker ───────────────────────────────────────────────────────────
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -64,8 +86,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.IMAGE_REPO }}:${{ steps.version.outputs.version }}
-            ${{ env.IMAGE_REPO }}:latest
+            ${{ steps.image.outputs.repo }}:${{ steps.version.outputs.version }}
+            ${{ steps.image.outputs.repo }}:latest
           labels: |
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -95,7 +117,7 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Docker image:**" >> "$GITHUB_STEP_SUMMARY"
           echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "${{ env.IMAGE_REPO }}:${{ steps.version.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.image.outputs.repo }}:${{ steps.version.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
           echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Manifest updated:** \`${{ env.MANIFEST }}\` → image_tag: \`${{ steps.version.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
