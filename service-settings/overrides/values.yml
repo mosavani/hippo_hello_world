@@ -5,7 +5,7 @@ global:
   env: prod
 
 service:
-  replicaCount: 4
+  replicaCount: 2
 
 hpa:
   minReplicas: 4
@@ -15,8 +15,8 @@ hpa:
 affinity:
   podAntiAffinity: hard             # Hard HA in production
 
-pdb:
-  minAvailable: 2
+# pdb:
+#   minAvailable: 2
 
 ingress:
   # host: omitted — inherits default from Helm chart
