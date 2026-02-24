@@ -19,6 +19,6 @@
 app_name: hippo-hello-world
 repo_url: https://github.com/mosavani/hippo_hello_world.git
 target_revision: HEAD
-image_tag: "0.0.7"
+image_tag: "0.0.9"
 default_values: service-settings/default/values.yml
 prod_values: service-settings/overrides/values.yml
