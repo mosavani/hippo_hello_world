@@ -7,6 +7,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../app"))
 
 import pytest
+from unittest.mock import patch, MagicMock
 from main import app as flask_app
 
 
@@ -19,13 +20,11 @@ def client():
 
 class TestRootEndpoint:
     def test_returns_200(self, client):
-        resp = client.get("/")
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = [{"q": "Test quote.", "a": "Tester"}]
+        with patch("main.requests.get", return_value=mock_resp):
+            resp = client.get("/")
         assert resp.status_code == 200
-
-    def test_returns_hello_world(self, client):
-        resp = client.get("/")
-        data = resp.get_json()
-        assert data["message"] == "Hello, World!"
 
 
 class TestHealthEndpoint:
@@ -72,12 +71,18 @@ class TestMetricsEndpoint:
         assert "text/plain" in resp.content_type
 
     def test_includes_request_counter(self, client):
-        client.get("/")
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = [{"q": "Test quote.", "a": "Tester"}]
+        with patch("main.requests.get", return_value=mock_resp):
+            client.get("/")
         resp = client.get("/metrics")
         assert b"http_requests_total" in resp.data
 
     def test_includes_latency_histogram(self, client):
-        client.get("/")
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = [{"q": "Test quote.", "a": "Tester"}]
+        with patch("main.requests.get", return_value=mock_resp):
+            client.get("/")
         resp = client.get("/metrics")
         assert b"http_request_duration_seconds" in resp.data
 

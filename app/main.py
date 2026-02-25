@@ -2,7 +2,7 @@
 hippo_hello_world — Flask application with golden-signal Prometheus metrics.
 
 Endpoints:
-  GET /        → "Hello, World!"
+  GET /        → random quote from live API
   GET /health  → liveness probe
   GET /ready   → readiness probe
   GET /metrics → Prometheus scrape endpoint
@@ -20,6 +20,7 @@ import time
 import threading
 import random
 
+import requests
 from flask import Flask, jsonify, request, Response
 from prometheus_client import (
     Counter,
@@ -122,13 +123,34 @@ def _after(response):
 
 
 # ------------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------------
+
+_FALLBACK_QUOTE = {"text": "Keep it simple.", "author": "Unknown"}
+
+
+def _burn_cpu(duration_ms: float) -> None:
+    """Busy-loop for approximately *duration_ms* milliseconds."""
+    end = time.time() + duration_ms / 1000.0
+    while time.time() < end:
+        pass
+
+
+# ------------------------------------------------------------------------
 # Routes — the endpoints that the service exposes
 # ------------------------------------------------------------------------
 
 @app.route("/")
 def hello():
-    time.sleep(random.uniform(0.1, 0.9))  # simulate random latency
-    return jsonify(message="Hello, World!"), 200
+    _burn_cpu(random.uniform(0, 200))
+    quote = _FALLBACK_QUOTE
+    try:
+        resp = requests.get("https://zenquotes.io/api/random", timeout=2)
+        data = resp.json()
+        quote = {"text": data[0]["q"], "author": data[0]["a"]}
+    except Exception:
+        pass
+    return jsonify(message=quote["text"], author=quote["author"]), 200
 
 
 @app.route("/health")
