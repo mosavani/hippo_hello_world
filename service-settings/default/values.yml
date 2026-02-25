@@ -37,9 +37,9 @@ ingress:
 
 hpa:
   enabled: true
-  minReplicas: 2
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 70
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 50
   scaleDownStabilizationWindowSeconds: 300
 
 pdb:
