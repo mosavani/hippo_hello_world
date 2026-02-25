@@ -6,6 +6,10 @@ global:
 
 service:
   replicaCount: 2
+  liveness:
+    periodSeconds: 60
+  readiness:
+    periodSeconds: 30
 
 hpa:
   minReplicas: 4
