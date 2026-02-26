@@ -42,6 +42,38 @@ hpa:
   targetCPUUtilizationPercentage: 50
   scaleDownStabilizationWindowSeconds: 300
 
+rollout:
+  enabled: true
+  autoPromote: false
+  maxSurge: 25
+  maxUnavailable: 0
+  progressDeadlineSeconds: 600
+  progressDeadlineAbort: true
+  # Analysis — CPU and memory health gates auto-injected after every setWeight step.
+  # Breach threshold → automatic abort and rollback to stable.
+  # Emergency bypass: kubectl argo rollouts promote --full svc-hippo-hello-world -n svc-hippo-hello-world
+  analysis:
+    defaultCpuUsage:
+      threshold: 70
+    defaultMemoryUtilization:
+      threshold: 80
+  steps:
+    - setWeight: 10
+    - pause:
+        duration: 2m
+    - setWeight: 25
+    - pause:
+        duration: 2m
+    - setWeight: 50
+    - pause:
+        duration: 3m
+    - setWeight: 75
+    - pause:
+        duration: 3m
+    - setWeight: 100
+    - pause:
+        duration: 2m
+
 pdb:
   enabled: true
   minAvailable: 1

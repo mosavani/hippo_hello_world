@@ -16,6 +16,30 @@ hpa:
   maxReplicas: 50
   targetCPUUtilizationPercentage: 60
 
+rollout:
+  # Tighter thresholds and longer pauses for production safety.
+  analysis:
+    defaultCpuUsage:
+      threshold: 60
+    defaultMemoryUtilization:
+      threshold: 70
+  steps:
+    - setWeight: 5
+    - pause:
+        duration: 5m
+    - setWeight: 20
+    - pause:
+        duration: 5m
+    - setWeight: 50
+    - pause:
+        duration: 10m
+    - setWeight: 75
+    - pause:
+        duration: 10m
+    - setWeight: 100
+    - pause:
+        duration: 5m
+
 affinity:
   podAntiAffinity: hard             # Hard HA in production
 
