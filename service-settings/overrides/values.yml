@@ -5,7 +5,7 @@ global:
   env: prod
 
 service:
-  replicaCount: 2
+  replicaCount: 5
   liveness:
     periodSeconds: 60
   readiness:
@@ -40,8 +40,8 @@ rollout:
     - pause:
         duration: 5m
 
-affinity:
-  podAntiAffinity: hard             # Hard HA in production
+# affinity:
+#   podAntiAffinity: hard             # Hard HA in production
 
 # pdb:
 #   minAvailable: 2
