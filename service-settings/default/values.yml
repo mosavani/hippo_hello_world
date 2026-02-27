@@ -5,7 +5,7 @@ global:
   env: dev
 
 service:
-  replicaCount: 5
+  replicaCount: 1
   type: ClusterIP
   port: 80
   targetPort: 8080
@@ -37,10 +37,11 @@ ingress:
 
 hpa:
   enabled: true
-  minReplicas: 5
-  maxReplicas: 5
-  targetCPUUtilizationPercentage: 50
-  scaleDownStabilizationWindowSeconds: 300
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50   # scale UP when CPU > 50%
+  scaleDownCPUThreshold: 20            # scale DOWN only when CPU < 20%
+  scaleDownStabilizationWindowSeconds: 300  # must stay below for 5m before scaling down
 
 rollout:
   enabled: true
