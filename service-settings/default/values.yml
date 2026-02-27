@@ -31,7 +31,7 @@ ingress:
   enabled: true
   className: "gce"
   annotations:
-    kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/ingress.allow-http: "true"
   # host: omitted — inherits default from Helm chart
   path: /
 
