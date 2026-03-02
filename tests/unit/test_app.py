@@ -23,7 +23,7 @@ class TestRootEndpoint:
         mock_resp = MagicMock()
         mock_resp.json.return_value = [{"q": "Test quote.", "a": "Tester"}]
         with patch("main.requests.get", return_value=mock_resp):
-            resp = client.get("/")
+            resp = client.get("/hello")
         assert resp.status_code == 200
 
 
