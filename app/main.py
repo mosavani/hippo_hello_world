@@ -140,7 +140,7 @@ def _burn_cpu(duration_ms: float) -> None:
 # Routes — the endpoints that the service exposes
 # ------------------------------------------------------------------------
 
-@app.route("/")
+@app.route("/hello")
 def hello():
     _burn_cpu(random.uniform(0, 200))
     quote = _FALLBACK_QUOTE
@@ -149,7 +149,7 @@ def hello():
         data = resp.json()
         quote = {"text": data[0]["q"], "author": data[0]["a"]}
     except Exception:
-        pass
+        return jsonify(status="Unknown Error"), 500
     return jsonify(message=quote["text"], author=quote["author"]), 200
 
 
