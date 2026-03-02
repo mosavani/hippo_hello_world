@@ -39,9 +39,9 @@ hpa:
   enabled: true
   minReplicas: 1
   maxReplicas: 3
-  targetCPUUtilizationPercentage: 50   # scale UP when CPU > 50%
+  targetCPUUtilizationPercentage: 60   # scale UP when CPU > 60%
   scaleDownCPUThreshold: 20            # scale DOWN only when CPU < 20%
-  scaleDownStabilizationWindowSeconds: 120  # must stay below for 5m before scaling down
+  scaleDownStabilizationWindowSeconds: 120  # must stay below for 2m before scaling down
 
 rollout:
   enabled: true
